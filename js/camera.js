@@ -213,3 +213,57 @@ function tagged(name, message) {
   e.friendly = true;
   return e;
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   Model download with progress.
+
+   First load pulls ~15 MB (a 9 MB wasm binary and a 5.5 MB model). That
+   is a few seconds on good broadband and well over half a minute on a
+   weak connection, so a static "loading…" caption is indistinguishable
+   from a hang. These report real bytes instead.
+   ══════════════════════════════════════════════════════════════════ */
+
+/**
+ * @param onProgress (receivedBytes, totalBytesOrNull)
+ * @returns {Promise<Uint8Array>}
+ */
+export async function fetchWithProgress(url, onProgress) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${url}`);
+
+  // Content-Length describes the COMPRESSED body while the reader yields
+  // decompressed bytes, so for a gzipped asset the total is an undercount
+  // and a naive percentage sails past 100%. Only trust it when the server
+  // says the body is identity-encoded.
+  const encoded = (res.headers.get('content-encoding') || '').toLowerCase();
+  const len = Number(res.headers.get('content-length')) || 0;
+  const total = (!encoded || encoded === 'identity') && len > 0 ? len : null;
+
+  if (!res.body || !res.body.getReader) {
+    const buf = new Uint8Array(await res.arrayBuffer());
+    onProgress(buf.length, total);
+    return buf;
+  }
+
+  const reader = res.body.getReader();
+  const chunks = [];
+  let received = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    received += value.length;
+    onProgress(received, total);
+  }
+  const out = new Uint8Array(received);
+  let off = 0;
+  for (const c of chunks) { out.set(c, off); off += c.length; }
+  return out;
+}
+
+export function formatProgress(label, received, total) {
+  const mb = b => (b / 1048576).toFixed(1);
+  return total
+    ? `${label} ${mb(received)} / ${mb(total)} MB`
+    : `${label} ${mb(received)} MB`;
+}

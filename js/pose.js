@@ -1,6 +1,10 @@
 import { FilesetResolver, PoseLandmarker }
   from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs';
-import { openCamera } from './camera.js';
+import { openCamera, fetchWithProgress, formatProgress } from './camera.js';
+
+const WASM_BASE = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm';
+const MODEL_URL = 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/' +
+                  'pose_landmarker_lite/float16/1/pose_landmarker_lite.task';
 
 /* ══════════════════════════════════════════════════════════════════
    Body tracker.
@@ -237,16 +241,29 @@ export class PoseController {
     this.video.srcObject = this.stream;
     await this.video.play();
 
-    onProgress('loading the pose model…');
-    const fileset = await FilesetResolver.forVisionTasks(
-      'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm'
-    );
+    // Warm the wasm binary ourselves so the ~9 MB download is visible.
+    // FilesetResolver fetches it internally with no progress hook, but it
+    // will hit the HTTP cache we just filled.
+    onProgress('downloading the tracker…');
+    try {
+      await fetchWithProgress(WASM_BASE + '/vision_wasm_internal.wasm',
+        (got, total) => onProgress(formatProgress('downloading the tracker…', got, total)));
+    } catch (e) {
+      // A failed warm-up is not fatal; FilesetResolver will fetch it again.
+    }
+
+    onProgress('starting the tracker…');
+    const fileset = await FilesetResolver.forVisionTasks(WASM_BASE);
+
+    // Fetching the model ourselves (rather than handing MediaPipe a URL)
+    // is the only way to show progress on the 5.5 MB download.
+    onProgress('downloading the pose model…');
+    const modelBuffer = await fetchWithProgress(MODEL_URL,
+      (got, total) => onProgress(formatProgress('downloading the pose model…', got, total)));
+
+    onProgress('preparing the model…');
     this.landmarker = await PoseLandmarker.createFromOptions(fileset, {
-      baseOptions: {
-        modelAssetPath:
-          'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task',
-        delegate: 'GPU'
-      },
+      baseOptions: { modelAssetBuffer: modelBuffer, delegate: 'GPU' },
       runningMode: 'VIDEO',
       // One more than we need, so an extra body is something we can see and
       // deliberately reject rather than something that displaces a pilot.

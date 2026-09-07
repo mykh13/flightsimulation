@@ -117,6 +117,31 @@ reject rather than something that displaces a pilot.
 Sign convention used throughout the sim: `bank > 0` is rolled **left** and
 turns **left**; `pitch > 0` is nose **up**.
 
+## How long the first load takes
+
+The camera itself opens in well under a second once you accept the prompt.
+If it has not opened within a couple of seconds it is not slow, it is failing
+— see below.
+
+The wait is the one-time download. Measured sizes:
+
+| Asset | Size | From |
+| --- | --- | --- |
+| MediaPipe JS bundle | 0.13 MB | jsDelivr |
+| WASM runtime | 8.99 MB | jsDelivr |
+| Pose model (`.task`) | 5.51 MB | Google model host |
+| **Total** | **~15 MB** | |
+
+Roughly 5–10 s on decent broadband, and comfortably over a minute on a weak
+connection — one `.task` fetch during development took 38 s. It is cached
+afterwards, so later loads are ~1 s.
+
+The loading screen reports real byte counts (`downloading the pose model…
+3.3 / 5.5 MB`) rather than a static caption, so a slow download is
+distinguishable from a hang. To make that possible the model is fetched
+directly and handed to MediaPipe as `modelAssetBuffer`; passing
+`modelAssetPath` gives no progress hook at all.
+
 ## If the camera won't start
 
 When opening the camera fails, the start screen shows a **Camera diagnostics**

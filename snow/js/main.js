@@ -172,6 +172,7 @@ function begin(controlMode) {
   }
   els.hint.textContent = hints[0];
   els.start.classList.add('hidden');
+  stopLoadNote();
   els.loading.classList.add('hidden');
   els.hud.classList.remove('hidden');
   game.reset();
@@ -184,12 +185,14 @@ els.btnStart.addEventListener('click', async () => {
   els.btnStart.disabled = true;
   els.startError.textContent = '';
   els.loading.classList.remove('hidden');
+  startLoadNote();
   try {
     tracker = new RiderTracker(els.video, els.poseCanvas);
     await tracker.init(msg => { els.loadingText.textContent = msg; });
     begin('pose');
   } catch (err) {
     console.error(err);
+    stopLoadNote();
     els.loading.classList.add('hidden');
     els.btnStart.disabled = false;
     els.startError.textContent = (err && err.friendly)
@@ -225,4 +228,27 @@ async function showCameraDiagnostics() {
   } catch (e) {
     /* diagnostics are a nicety; never let them mask the original failure */
   }
+}
+
+/* ── first-load note ──────────────────────────────────────────────── */
+// ~15 MB of wasm and model comes down the first time. On a slow link that
+// is well over half a minute, and silence reads as a hang.
+let loadNoteTimers = [];
+function startLoadNote() {
+  const note = document.getElementById('loading-note');
+  if (!note) return;
+  stopLoadNote();
+  note.textContent = '';
+  loadNoteTimers = [
+    setTimeout(() => { note.textContent =
+      'First run downloads about 15 MB of tracking model. It is cached afterwards.'; }, 2500),
+    setTimeout(() => { note.textContent =
+      'Still downloading — this can take a minute on a slow connection.'; }, 25000),
+    setTimeout(() => { note.textContent =
+      'Taking unusually long. If nothing moves, check your connection and reload.'; }, 60000)
+  ];
+}
+function stopLoadNote() {
+  loadNoteTimers.forEach(clearTimeout);
+  loadNoteTimers = [];
 }
