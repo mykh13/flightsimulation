@@ -117,6 +117,24 @@ reject rather than something that displaces a pilot.
 Sign convention used throughout the sim: `bank > 0` is rolled **left** and
 turns **left**; `pitch > 0` is nose **up**.
 
+## If the camera won't start
+
+The start screen reports the actual reason rather than a raw browser error,
+and the button becomes **Try the camera again** so you can retry without
+reloading. Both games fall back to keyboard control regardless.
+
+| Message | What to do |
+| --- | --- |
+| *No camera was found* | Check one is connected and enabled, and that no privacy shutter covers it. The message says how many video inputs the browser can see — `0` usually means a hardware or OS-level block. |
+| *The camera is busy* | Close whatever else has it: a video call, Photo Booth, OBS. |
+| *Permission was denied* | Allow it for the site, then reload. On macOS also check System Settings › Privacy & Security › Camera. |
+| *Only works on https or localhost* | `getUserMedia` needs a secure context. Use the hosted copy or `./startup.sh`. |
+
+`js/camera.js` also retries with progressively looser constraints — some
+virtual cameras and capture cards reject `facingMode` outright — before
+giving up. A permission denial is never retried, since relaxing constraints
+cannot fix it.
+
 ## Notes
 
 - Hills are built from `CylinderGeometry` with a small top radius, **not**

@@ -1,5 +1,6 @@
 import { FilesetResolver, PoseLandmarker }
   from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs';
+import { openCamera } from './camera.js';
 
 /* ══════════════════════════════════════════════════════════════════
    Rider tracking.
@@ -78,10 +79,7 @@ export class RiderTracker {
 
   async init(onProgress = () => {}) {
     onProgress('opening the camera…');
-    this.stream = await navigator.mediaDevices.getUserMedia({
-      video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' },
-      audio: false
-    });
+    this.stream = await openCamera();
     this.video.srcObject = this.stream;
     await this.video.play();
 

@@ -266,10 +266,13 @@ els.btnStart.addEventListener('click', async () => {
     console.error(err);
     els.loading.classList.add('hidden');
     els.btnStart.disabled = false;
-    els.startError.textContent =
-      err && err.name === 'NotAllowedError'
-        ? 'Camera permission was denied — allow it, or fly with the keyboard below.'
-        : `Could not start tracking (${err && err.message ? err.message : err}). You can still fly with the keyboard.`;
+    // openCamera() already translates the failure into something actionable;
+    // anything else is a genuine surprise and shows its raw message.
+    els.startError.textContent = (err && err.friendly)
+      ? err.message + ' You can fly with the keyboard meanwhile.'
+      : `Could not start tracking (${err && err.message ? err.message : err}). ` +
+        'You can still fly with the keyboard.';
+    els.btnStart.textContent = 'Try the camera again';
   }
 });
 

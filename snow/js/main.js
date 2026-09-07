@@ -191,10 +191,11 @@ els.btnStart.addEventListener('click', async () => {
     console.error(err);
     els.loading.classList.add('hidden');
     els.btnStart.disabled = false;
-    els.startError.textContent =
-      err && err.name === 'NotAllowedError'
-        ? 'Camera permission was denied — allow it, or play with the arrow keys below.'
-        : `Could not start tracking (${err && err.message ? err.message : err}). You can still play with the arrow keys.`;
+    els.startError.textContent = (err && err.friendly)
+      ? err.message + ' You can play with the arrow keys meanwhile.'
+      : `Could not start tracking (${err && err.message ? err.message : err}). ` +
+        'You can still play with the arrow keys.';
+    els.btnStart.textContent = 'Try the camera again';
   }
 });
 
