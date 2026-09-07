@@ -90,13 +90,12 @@ export async function openCamera() {
   switch (name) {
     case 'NotAllowedError':
     case 'SecurityError':
-      throw tagged(name, 'Camera permission was denied. Allow it for this site, ' +
-        'then reload. On macOS also check System Settings › Privacy & Security › Camera.');
+      throw tagged(name, 'Camera permission was denied. Allow it for this site, then reload.' +
+        osPrivacyHint());
     case 'NotFoundError':
     case 'DevicesNotFoundError':
       throw tagged(name, 'No camera was found.' + detail +
-        ' Check one is connected and enabled, and that no privacy shutter or ' +
-        'switch is covering it.');
+        hardwareSwitchHint() + osPrivacyHint());
     case 'NotReadableError':
     case 'TrackStartError':
       throw tagged(name, 'The camera is busy.' + detail +
@@ -106,6 +105,49 @@ export async function openCamera() {
     default:
       throw tagged(name, ((last && last.message) || String(last)) + detail);
   }
+}
+
+/** Rough OS family, for pointing at the right settings screen. */
+function osFamily() {
+  const uad = navigator.userAgentData;
+  const p = (uad && uad.platform) || navigator.platform || navigator.userAgent || '';
+  if (/win/i.test(p)) return 'windows';
+  if (/mac/i.test(p)) return 'macos';
+  if (/cros/i.test(p)) return 'chromeos';
+  if (/linux|x11/i.test(p)) return 'linux';
+  return 'other';
+}
+
+/** Where the OS-level camera switch lives. */
+function osPrivacyHint() {
+  switch (osFamily()) {
+    case 'windows':
+      return ' Also check Windows Settings › Privacy & security › Camera, and turn on' +
+             ' both "Camera access" and "Let desktop apps access your camera".';
+    case 'macos':
+      return ' Also check System Settings › Privacy & Security › Camera.';
+    case 'chromeos':
+      return ' Also check the camera toggle in ChromeOS Settings › Privacy and security.';
+    case 'linux':
+      return ' Also check the camera is present as /dev/video* and your user can read it.';
+    default:
+      return ' Also check your operating system has not blocked camera access.';
+  }
+}
+
+/**
+ * A laptop webcam that is switched off in hardware does not appear as a
+ * disabled device — it vanishes from enumeration entirely, which surfaces
+ * as NotFoundError rather than a permission error. Worth naming explicitly,
+ * because "the camera works fine in other apps" and "the browser cannot see
+ * any camera" are both true at once in that state.
+ */
+function hardwareSwitchHint() {
+  return osFamily() === 'windows' || osFamily() === 'linux'
+    ? ' Many laptops also have a function key (often F10 with a crossed-out camera icon)' +
+      ' or a sliding shutter that disables the webcam in hardware — when that is engaged the' +
+      ' camera disappears from the device list completely.'
+    : ' Check too for a sliding privacy shutter or a keyboard camera toggle.';
 }
 
 function tagged(name, message) {

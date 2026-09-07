@@ -127,8 +127,16 @@ reloading. Both games fall back to keyboard control regardless.
 | --- | --- |
 | *No camera was found* | Check one is connected and enabled, and that no privacy shutter covers it. The message reports what the browser lists — but note it only claims *"no video inputs at all"* when the browser is actually being candid. Device lists are masked until camera permission has been granted once, so an empty list on its own proves nothing. |
 | *The camera is busy* | Close whatever else has it: a video call, Photo Booth, OBS. |
-| *Permission was denied* | Allow it for the site, then reload. On macOS also check System Settings › Privacy & Security › Camera. |
+| *Permission was denied* | Allow it for the site, then reload, and check the OS camera switch — the message names the right settings screen for your platform. |
 | *Only works on https or localhost* | `getUserMedia` needs a secure context. Use the hosted copy or `./startup.sh`. |
+
+On a laptop, `NotFoundError` most often means the webcam is switched off in
+hardware — a function key (frequently F10, with a crossed-out camera icon) or
+a sliding shutter. That does not present as a disabled device: the camera
+disappears from enumeration entirely, so the browser reports no camera at all
+while it still works in other apps once re-enabled. On Windows the same
+symptom comes from Settings › Privacy & security › Camera with *"Let desktop
+apps access your camera"* turned off.
 
 `js/camera.js` also retries with progressively looser constraints — some
 virtual cameras and capture cards reject `facingMode` outright — before
