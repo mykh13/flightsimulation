@@ -125,7 +125,7 @@ reloading. Both games fall back to keyboard control regardless.
 
 | Message | What to do |
 | --- | --- |
-| *No camera was found* | Check one is connected and enabled, and that no privacy shutter covers it. The message says how many video inputs the browser can see — `0` usually means a hardware or OS-level block. |
+| *No camera was found* | Check one is connected and enabled, and that no privacy shutter covers it. The message reports what the browser lists — but note it only claims *"no video inputs at all"* when the browser is actually being candid. Device lists are masked until camera permission has been granted once, so an empty list on its own proves nothing. |
 | *The camera is busy* | Close whatever else has it: a video call, Photo Booth, OBS. |
 | *Permission was denied* | Allow it for the site, then reload. On macOS also check System Settings › Privacy & Security › Camera. |
 | *Only works on https or localhost* | `getUserMedia` needs a secure context. Use the hosted copy or `./startup.sh`. |

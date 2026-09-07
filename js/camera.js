@@ -18,14 +18,33 @@ const CONSTRAINTS = [
   { video: true }
 ];
 
-export async function countCameras() {
+/**
+ * What the browser will admit about the camera situation.
+ *
+ * Device lists are deliberately masked until permission is granted: an
+ * empty videoinput list can mean "no camera" OR "not telling you yet".
+ * `labelsVisible` is the tell — labels only populate once a camera has
+ * actually been opened, so without them a count of 0 proves nothing.
+ */
+export async function cameraDiagnostics() {
+  const out = {
+    secure: !!window.isSecureContext,
+    permission: 'unknown',
+    videoInputs: null,
+    totalDevices: null,
+    labelsVisible: false
+  };
   try {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return null;
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    return devices.filter(d => d.kind === 'videoinput').length;
-  } catch (e) {
-    return null;
-  }
+    const all = await navigator.mediaDevices.enumerateDevices();
+    out.totalDevices = all.length;
+    out.videoInputs = all.filter(d => d.kind === 'videoinput').length;
+    out.labelsVisible = all.some(d => d.label);
+  } catch (e) { /* leave nulls */ }
+  try {
+    const p = await navigator.permissions.query({ name: 'camera' });
+    out.permission = p.state;
+  } catch (e) { /* Firefox/Safari lack the camera permission name */ }
+  return out;
 }
 
 export async function openCamera() {
@@ -49,11 +68,24 @@ export async function openCamera() {
     }
   }
 
-  const n = await countCameras();
+  const d = await cameraDiagnostics();
   const name = (last && last.name) || 'Error';
-  const detail = n === null ? '' :
-    n === 0 ? ' The browser can see no video input devices at all.'
-            : ` The browser can see ${n} camera${n === 1 ? '' : 's'}, but could not open one.`;
+
+  // Only claim a device count when the browser is actually being candid.
+  // Before permission is granted the list is masked, so "0 cameras" would
+  // be an assertion we cannot support.
+  let detail = '';
+  if (d.videoInputs === null) {
+    detail = '';
+  } else if (d.videoInputs > 0) {
+    detail = ` The browser lists ${d.videoInputs} camera${d.videoInputs === 1 ? '' : 's'}.`;
+  } else if (d.labelsVisible || d.permission === 'granted') {
+    detail = ' The browser lists no video input devices at all.';
+  } else {
+    detail = ' The browser is not listing any devices yet, which it also does' +
+             ' before camera permission has ever been granted — so this does not' +
+             ' by itself prove there is no camera.';
+  }
 
   switch (name) {
     case 'NotAllowedError':
