@@ -1,6 +1,7 @@
 import { Game, TRACK } from './game.js';
 import { SnowScene } from './scene.js';
 import { RiderTracker } from './pose.js';
+import { cameraDiagnostics, formatDiagnostics, interpret } from './camera.js';
 
 /* ══════════════════════════════════════════════════════════════════
    Snow Run — entry point.
@@ -196,9 +197,32 @@ els.btnStart.addEventListener('click', async () => {
       : `Could not start tracking (${err && err.message ? err.message : err}). ` +
         'You can still play with the arrow keys.';
     els.btnStart.textContent = 'Try the camera again';
+    showCameraDiagnostics();
   }
 });
 
 els.btnKeys.addEventListener('click', () => begin('keys'));
 
 window.__snow = { game, renderer, TRACK, get tracker() { return tracker; }, get mode() { return mode; } };
+
+/* ── camera diagnostics panel ─────────────────────────────────────── */
+async function showCameraDiagnostics() {
+  const wrap = document.getElementById('cam-diag');
+  const body = document.getElementById('diag-body');
+  const verdict = document.getElementById('diag-verdict');
+  if (!wrap || !body) return;
+  try {
+    const d = await cameraDiagnostics();
+    verdict.textContent = interpret(d);
+    body.textContent = formatDiagnostics(d);
+    wrap.classList.remove('hidden');
+    const copy = document.getElementById('diag-copy');
+    if (copy) copy.onclick = () => {
+      navigator.clipboard.writeText(verdict.textContent + '\n\n' + body.textContent)
+        .then(() => { copy.textContent = 'Copied'; setTimeout(() => copy.textContent = 'Copy', 1500); })
+        .catch(() => { copy.textContent = 'Select and copy manually'; });
+    };
+  } catch (e) {
+    /* diagnostics are a nicety; never let them mask the original failure */
+  }
+}

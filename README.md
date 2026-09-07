@@ -119,6 +119,13 @@ turns **left**; `pitch > 0` is nose **up**.
 
 ## If the camera won't start
 
+When opening the camera fails, the start screen shows a **Camera diagnostics**
+panel with a one-line verdict and the raw readout, so there is no need to open
+DevTools. The most useful line is usually the comparison between video and
+audio inputs: if microphones are listed but cameras are not, enumeration is
+working and the camera really is missing; if *nothing* is listed, the block is
+at OS or browser level rather than anything to do with the camera.
+
 The start screen reports the actual reason rather than a raw browser error,
 and the button becomes **Try the camera again** so you can retry without
 reloading. Both games fall back to keyboard control regardless.

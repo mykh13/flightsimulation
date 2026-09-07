@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { World } from './world.js';
 import { Aircraft, ChaseCamera, LIVERIES } from './plane.js';
 import { PoseController, PLAYER_ACCENT } from './pose.js';
+import { cameraDiagnostics, formatDiagnostics, interpret } from './camera.js';
 import { Panel, Register, Banner } from './hud.js';
 
 /* ══════════════════════════════════════════════════════════════════
@@ -273,6 +274,7 @@ els.btnStart.addEventListener('click', async () => {
       : `Could not start tracking (${err && err.message ? err.message : err}). ` +
         'You can still fly with the keyboard.';
     els.btnStart.textContent = 'Try the camera again';
+    showCameraDiagnostics();
   }
 });
 
@@ -287,3 +289,25 @@ window.__wind = {
   get fps() { return fps; },
   get pose() { return pose; }
 };
+
+/* ── camera diagnostics panel ─────────────────────────────────────── */
+async function showCameraDiagnostics() {
+  const wrap = document.getElementById('cam-diag');
+  const body = document.getElementById('diag-body');
+  const verdict = document.getElementById('diag-verdict');
+  if (!wrap || !body) return;
+  try {
+    const d = await cameraDiagnostics();
+    verdict.textContent = interpret(d);
+    body.textContent = formatDiagnostics(d);
+    wrap.classList.remove('hidden');
+    const copy = document.getElementById('diag-copy');
+    if (copy) copy.onclick = () => {
+      navigator.clipboard.writeText(verdict.textContent + '\n\n' + body.textContent)
+        .then(() => { copy.textContent = 'Copied'; setTimeout(() => copy.textContent = 'Copy', 1500); })
+        .catch(() => { copy.textContent = 'Select and copy manually'; });
+    };
+  } catch (e) {
+    /* diagnostics are a nicety; never let them mask the original failure */
+  }
+}

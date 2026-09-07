@@ -28,23 +28,80 @@ const CONSTRAINTS = [
  */
 export async function cameraDiagnostics() {
   const out = {
+    url: location.href,
     secure: !!window.isSecureContext,
+    inIframe: window.self !== window.top,
+    policyAllowsCamera: 'unknown',
     permission: 'unknown',
     videoInputs: null,
+    audioInputs: null,
     totalDevices: null,
-    labelsVisible: false
+    labelsVisible: false,
+    browser: navigator.userAgent
   };
+
+  // A frame whose Permissions Policy withholds "camera" sees NO video
+  // devices at all and cannot open one — the same symptoms as having no
+  // webcam, which is why it is worth testing for explicitly.
+  try {
+    const pol = document.permissionsPolicy || document.featurePolicy;
+    if (pol && pol.allowsFeature) out.policyAllowsCamera = pol.allowsFeature('camera');
+  } catch (e) { /* not supported */ }
+
   try {
     const all = await navigator.mediaDevices.enumerateDevices();
     out.totalDevices = all.length;
     out.videoInputs = all.filter(d => d.kind === 'videoinput').length;
+    out.audioInputs = all.filter(d => d.kind === 'audioinput').length;
     out.labelsVisible = all.some(d => d.label);
   } catch (e) { /* leave nulls */ }
+
   try {
     const p = await navigator.permissions.query({ name: 'camera' });
     out.permission = p.state;
   } catch (e) { /* Firefox/Safari lack the camera permission name */ }
+
   return out;
+}
+
+/** The readout, as something a person can read or paste back. */
+export function formatDiagnostics(d) {
+  const yn = v => (v === true ? 'yes' : v === false ? 'no' : String(v));
+  return [
+    `page          ${d.url}`,
+    `secure ctx    ${yn(d.secure)}`,
+    `in iframe     ${yn(d.inIframe)}`,
+    `policy allows ${yn(d.policyAllowsCamera)}`,
+    `permission    ${d.permission}`,
+    `video inputs  ${d.videoInputs === null ? 'could not enumerate' : d.videoInputs}`,
+    `audio inputs  ${d.audioInputs === null ? 'could not enumerate' : d.audioInputs}`,
+    `labels shown  ${yn(d.labelsVisible)}`,
+    `browser       ${d.browser}`
+  ].join('\n');
+}
+
+/**
+ * The single most useful line: what the numbers above actually imply.
+ */
+export function interpret(d) {
+  if (!d.secure)
+    return 'This page is not a secure context, so the camera API is blocked. Use https or localhost.';
+  if (d.policyAllowsCamera === false)
+    return d.inIframe
+      ? 'Permissions Policy is withholding the camera from this frame. The page is embedded ' +
+        'in another one that does not pass camera access through — open it in a normal browser tab.'
+      : 'Permissions Policy is withholding the camera from this page.';
+  if (d.permission === 'denied')
+    return 'The site is blocked. Re-allow it in the browser\u2019s site settings, then reload.';
+  if (d.videoInputs === 0 && d.audioInputs === 0 && d.totalDevices === 0)
+    return 'The browser can see no devices of any kind, not even microphones \u2014 that points at ' +
+           'an OS-level or browser-level block rather than anything about the camera itself.';
+  if (d.videoInputs === 0 && d.audioInputs > 0)
+    return 'Microphones are visible but no camera is \u2014 so enumeration is working and the camera ' +
+           'really is absent from the device list.';
+  if (d.videoInputs > 0)
+    return 'A camera is listed, so it exists and is visible. Something else is preventing it opening.';
+  return 'Inconclusive \u2014 the browser is not revealing enough to say.';
 }
 
 export async function openCamera() {
