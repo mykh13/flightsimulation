@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kaze no Tani — Wind Valley Flight</title>
+<link rel="stylesheet" href="css/style.css">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+
+<canvas id="scene"></canvas>
+<div id="vignette"></div>
+
+<!-- HUD panels, the registration card and the drop-out banner are all
+     built by js/hud.js so one- and two-player share a code path. -->
+<div id="hud" class="hidden" data-players="1">
+  <div class="hud-shared">
+    <div id="hint" class="hint">spread your arms to catch the wind</div>
+    <div id="pilot-view">
+      <canvas id="pose-canvas" width="256" height="192"></canvas>
+    </div>
+  </div>
+  <div class="split-seam"></div>
+</div>
+
+<!-- ===== START SCREEN ===== -->
+<div id="start">
+  <div class="start-card">
+    <div class="crest">風</div>
+    <h1>Wind Valley</h1>
+    <p class="sub">a body-flown sky simulator</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-fig" aria-hidden="true">
+          <svg viewBox="0 0 80 60"><g class="fig"><circle cx="40" cy="14" r="7"/><path d="M40 21 v20"/><path d="M40 26 L10 26 M40 26 L70 26"/><path d="M40 41 L30 58 M40 41 L50 58"/></g></svg>
+        </div>
+        <b>Spread your arms</b>
+        <span>Wide arms = wings out. The wider you stretch, the more speed you carry.</span>
+      </div>
+      <div class="step">
+        <div class="step-fig" aria-hidden="true">
+          <svg viewBox="0 0 80 60"><g class="fig"><circle cx="40" cy="14" r="7"/><path d="M40 21 v20"/><path d="M40 26 L12 16 M40 26 L68 36"/><path d="M40 41 L30 58 M40 41 L50 58"/></g></svg>
+        </div>
+        <b>Tilt to bank</b>
+        <span>Drop one arm and raise the other — the plane rolls that way and carves a turn.</span>
+      </div>
+      <div class="step">
+        <div class="step-fig" aria-hidden="true">
+          <svg viewBox="0 0 80 60"><g class="fig"><circle cx="40" cy="14" r="7"/><path d="M40 21 v20"/><path d="M40 26 L14 12 M40 26 L66 12"/><path d="M40 41 L30 58 M40 41 L50 58"/></g></svg>
+        </div>
+        <b>Both arms up / down</b>
+        <span>Raise both arms to climb, lower them to dive toward the sea.</span>
+      </div>
+      <div class="step">
+        <div class="step-fig" aria-hidden="true">
+          <svg viewBox="0 0 80 60"><g class="fig"><circle cx="40" cy="16" r="7"/><path d="M40 23 v18"/><path d="M40 41 L30 58 M40 41 L50 58"/><path d="M40 28 L14 14 M40 28 L66 14" opacity=".35"/><path d="M40 28 L14 40 M40 28 L66 40"/></g><g class="arc"><path d="M18 20 q-5 8 0 16"/><path d="M62 20 q5 8 0 16"/></g></svg>
+        </div>
+        <b>Flap twice to boost</b>
+        <span>Beat your wings up-and-down twice, quickly, and a gust hurls you forward.</span>
+      </div>
+    </div>
+
+    <div class="mode-select" role="group" aria-label="Number of pilots">
+      <button type="button" class="mode-btn active" data-players="1">1 pilot</button>
+      <button type="button" class="mode-btn" data-players="2">2 pilots — split-screen race</button>
+    </div>
+
+    <button id="btn-start">Enable camera &amp; take off</button>
+    <button id="btn-keys" class="ghost">Fly with the keyboard instead</button>
+    <p class="fineprint">Video never leaves this machine — pose tracking runs entirely in your browser.</p>
+    <p class="error" id="start-error"></p>
+  </div>
+</div>
+
+<div id="loading" class="hidden"><div class="spinner"></div><span id="loading-text">waking the wind…</span></div>
+
+<video id="webcam" playsinline muted autoplay></video>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

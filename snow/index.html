@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Yuki — Snow Run</title>
+<link rel="stylesheet" href="css/style.css">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+
+<canvas id="scene"></canvas>
+<div id="vignette"></div>
+<div id="flash"></div>
+
+<!-- ===== HUD ===== -->
+<div id="hud" class="hidden">
+  <div class="hud-tl">
+    <div class="readout"><span class="label">DIST</span><span class="value" id="r-dist">0</span><span class="unit">m</span></div>
+    <div class="readout"><span class="label">SPEED</span><span class="value" id="r-speed">0</span><span class="unit">km/h</span></div>
+    <div class="readout small"><span class="label">BEST</span><span class="value" id="r-best">0</span><span class="unit">m</span></div>
+  </div>
+
+  <div class="hud-tr">
+    <div id="hint" class="hint">lean your shoulders to carve</div>
+  </div>
+
+  <!-- lean meter -->
+  <div class="lean-wrap">
+    <div class="lean-label">LEAN</div>
+    <div class="lean-bar">
+      <div class="lean-notch"></div>
+      <div class="lean-fill" id="lean-fill"></div>
+    </div>
+  </div>
+
+  <div id="pilot-view">
+    <canvas id="pose-canvas" width="256" height="192"></canvas>
+    <div id="pose-status">looking for you…</div>
+  </div>
+</div>
+
+<!-- ===== CRASH ===== -->
+<div id="crash" class="hidden">
+  <div class="crash-card">
+    <div class="crash-mark">✖</div>
+    <h2 id="crash-title">Wipeout</h2>
+    <p class="crash-sub" id="crash-sub">You clipped a rock.</p>
+    <div class="crash-stats">
+      <div><span id="crash-dist">0</span><small>metres</small></div>
+      <div><span id="crash-best">0</span><small>best</small></div>
+    </div>
+    <button id="btn-retry">Run it again</button>
+    <p class="crash-tip">or raise both arms above your head</p>
+    <div class="retry-ring"><div class="retry-fill" id="retry-fill"></div></div>
+  </div>
+</div>
+
+<!-- ===== START ===== -->
+<div id="start">
+  <div class="start-card">
+    <div class="crest">雪</div>
+    <h1>Snow Run</h1>
+    <p class="sub">lean into the mountain</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-fig" aria-hidden="true">
+          <svg viewBox="0 0 80 64"><g class="fig"><circle cx="30" cy="14" r="7"/><path d="M30 21 L26 42"/><path d="M31 26 L16 32 M31 26 L45 22"/><path d="M26 42 L20 60 M26 42 L34 60"/></g><g class="arrow"><path d="M56 30 L68 30 M63 25 L68 30 L63 35"/></g></svg>
+        </div>
+        <b>Lean to steer</b>
+        <span>Tip your shoulders left or right of your hips — the further you lean, the harder you carve.</span>
+      </div>
+      <div class="step">
+        <div class="step-fig" aria-hidden="true">
+          <svg viewBox="0 0 80 64"><g class="tree"><path d="M20 54 L20 46"/><path d="M20 10 L30 30 L10 30 Z"/><path d="M20 24 L33 46 L7 46 Z"/></g><g class="tree"><path d="M62 54 L62 46"/><path d="M62 14 L71 32 L53 32 Z"/><path d="M62 26 L74 46 L50 46 Z"/></g><g class="rock"><path d="M35 50 q3 -8 8 -8 q6 0 8 8 z"/></g></svg>
+        </div>
+        <b>Mind the pines</b>
+        <span>Trees crowd both edges of the run, and boulders sit right in the fall line.</span>
+      </div>
+      <div class="step">
+        <div class="step-fig" aria-hidden="true">
+          <svg viewBox="0 0 80 64"><g class="fig"><circle cx="40" cy="16" r="7"/><path d="M40 23 v18"/><path d="M40 41 L32 60 M40 41 L48 60"/><path d="M40 28 L22 38 M40 28 L58 38"/></g><g class="spark"><path d="M14 22 l5 5 M66 22 l-5 5 M40 4 v6"/></g></svg>
+        </div>
+        <b>Go faster and faster</b>
+        <span>The hill steepens the longer you survive. One hit and the run is over.</span>
+      </div>
+    </div>
+
+    <button id="btn-start">Enable camera &amp; drop in</button>
+    <button id="btn-keys" class="ghost">Play with arrow keys instead</button>
+    <p class="fineprint">Video never leaves this machine — pose tracking runs entirely in your browser.</p>
+    <p class="error" id="start-error"></p>
+  </div>
+</div>
+
+<div id="loading" class="hidden"><div class="spinner"></div><span id="loading-text">waxing the board…</span></div>
+
+<!-- ===== REGISTRATION ===== -->
+<div id="register" class="hidden">
+  <div class="register-card">
+    <h2>Step into frame</h2>
+    <p>Stand back far enough that your shoulders <em>and</em> hips are visible, then hold still.</p>
+    <div class="chip" id="reg-chip"><span class="chip-dot"></span><span>Rider</span><span class="chip-state" id="reg-state">waiting</span></div>
+  </div>
+</div>
+
+<video id="webcam" playsinline muted autoplay></video>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
